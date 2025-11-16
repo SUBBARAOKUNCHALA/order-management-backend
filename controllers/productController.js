@@ -46,6 +46,8 @@ exports.createProduct = async (req, res) => {
 //  Fetch All Products
 exports.getAllProducts = async (req, res) => {
   try {
+    const BASE_URL = process.env.BACKEND_URL || "http://localhost:5000";
+
     const products = await Product.find();
 
     const list = products.map(p => ({
@@ -56,7 +58,8 @@ exports.getAllProducts = async (req, res) => {
       category: p.category,
       discount: p.discount,
       sizes: p.sizes,
-      imageUrl: p.imagePath ? `http://localhost:5000${p.imagePath}` : null,
+      imageUrl: p.imagePath ? `${BASE_URL}${p.imagePath}` : null, // ✅ Use env variable
+      imagePath: p.imagePath, // keep original path if needed
       createdAt: p.createdAt,
     }));
 
