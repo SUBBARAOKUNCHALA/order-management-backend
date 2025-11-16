@@ -4,33 +4,49 @@ const fileUpload = require("express-fileupload");
 require('dotenv').config();
 const cors = require('cors');
 const connectDB = require('./config/db');
-const authRoutes=require("./routes/authRoutes")
+const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/product.routes");
 const cartRoutes = require('./routes/cart.routes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const path = require('path');
 const autoUpdateOrderStatus = require("./services/autoStatus");
 
-
 dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors());
+
+// ⭐ FIX CORS FOR VERCEL + RENDER
+app.use(
+  cors({
+    origin: [
+      "https://order-management-saas-frontend.vercel.app",
+      "http://localhost:4200"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
+
 app.use("/brandings", express.static(path.join(__dirname, "brandings")));
-app.use('/api/auth',authRoutes);
+
+app.use('/api/auth', authRoutes);
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use("/api/products", productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/payment', paymentRoutes);
 
+// error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
+
+// Auto-update orders every 1 hr
 setInterval(() => {
   autoUpdateOrderStatus();
 }, 60 * 60 * 1000);
