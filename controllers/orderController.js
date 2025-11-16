@@ -1,6 +1,9 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 
+const BASE_URL = process.env.BACKEND_URL || "http://localhost:5000";
+
+// Create Order
 exports.createOrder = async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
@@ -30,10 +33,9 @@ exports.createOrder = async (req, res) => {
         quantity,
         productName: product.name,
         price,
-        image: product.imagePath ? `http://localhost:5000${product.imagePath}` : null
+        image: product.imagePath ? `${BASE_URL}${product.imagePath}` : null
       });
     }
-    console.info("order creating reqbody",orderItems)
 
     const newOrder = new Order({
       userId: req.user._id,
@@ -58,8 +60,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-
-
+// Get all orders for logged-in user
 exports.getAllOrders = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -78,7 +79,9 @@ exports.getAllOrders = async (req, res) => {
       items: order.items.map(item => ({
         productId: item.productId?._id,
         productName: item.productName,
-        image: item.productId?.imageUrl || item.image,
+        image: item.productId?.imagePath
+          ? `${BASE_URL}${item.productId.imagePath}`
+          : item.image,
         quantity: item.quantity,
         price: item.price
       }))
@@ -91,8 +94,7 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
-
-
+// Get Order Details
 exports.getOrderDetails = async (req, res) => {
   try {
     const order = await Order.findOne({
@@ -114,7 +116,9 @@ exports.getOrderDetails = async (req, res) => {
       items: order.items.map(item => ({
         productId: item.productId?._id,
         productName: item.productName,
-        image: item.productId?.imageUrl || item.image,
+        image: item.productId?.imagePath
+          ? `${BASE_URL}${item.productId.imagePath}`
+          : item.image,
         quantity: item.quantity,
         price: item.price
       }))
@@ -123,12 +127,12 @@ exports.getOrderDetails = async (req, res) => {
     res.status(200).json(formatted);
 
   } catch (err) {
+    console.error("Get order details error:", err);
     res.status(500).json({ message: "Failed to fetch details", error: err.message });
   }
 };
 
-
-
+// Delete Order
 exports.deleteOrder = async (req, res) => {
   try {
     const deleted = await Order.findOneAndDelete({
@@ -141,6 +145,7 @@ exports.deleteOrder = async (req, res) => {
     res.json({ message: "Order deleted successfully" });
 
   } catch (error) {
+    console.error("Delete order error:", error);
     res.status(500).json({ message: "Error deleting order", error: error.message });
   }
 };
