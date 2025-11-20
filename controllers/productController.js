@@ -1,18 +1,22 @@
 const Product = require("../models/Product");
 const { decrypt } = require("../services/encryption.service");
 const path = require("path");
+const cloudinary = require("../config/cloudinary");
+const multer = require("multer");
+const upload = require("../middlewares/upload");
 
+// Used in route
+exports.uploadMiddleware = upload.single("image");
+
+// -------------------- CREATE PRODUCT -------------------------
 exports.createProduct = async (req, res) => {
   try {
-    if (!req.files || !req.files.image) {
+    if (!req.file) {
       return res.status(400).json({ message: "Image file is required" });
     }
 
-    const imageFile = req.files.image;
-
-    const fileName = Date.now() + "-" + imageFile.name;
-    const savePath = path.join(__dirname, "../brandings", fileName);
-    await imageFile.mv(savePath);
+    // Cloudinary image URL
+    const imageUrl = req.file.path;
 
     const { name, description, price, category, discount, sizes } = req.body;
 
@@ -30,15 +34,19 @@ exports.createProduct = async (req, res) => {
       category: decryptedCategory,
       discount: decryptedDiscount,
       sizes: decryptedSizes,
-      imagePath: `/brandings/${fileName}`,
+      imagePath: imageUrl, // <-- Cloudinary URL
     });
+    console.info("New Product Data:", product);
 
     await product.save();
 
-    res.json({ message: " Product uploaded successfully", product });
+    res.json({
+      message: "Product uploaded successfully",
+      product,
+    });
 
   } catch (err) {
-    console.error(" Error creating product:", err);
+    console.error("Error creating product:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };

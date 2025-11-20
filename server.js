@@ -1,6 +1,6 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const fileUpload = require("express-fileupload");
+//const fileUpload = require("express-fileupload");
 require('dotenv').config();
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -30,7 +30,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(fileUpload());
+//app.use(fileUpload());
 
 app.use("/brandings", express.static(path.join(__dirname, "brandings")));
 
