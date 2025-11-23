@@ -3,15 +3,20 @@ const Product = require('../models/Product');
 
 const BASE_URL = process.env.BACKEND_URL || "http://localhost:5000";
 
-// Create Order
+// Helper: returns full image URL correctly
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  return imagePath.startsWith('http') ? imagePath : `${BASE_URL}${imagePath}`;
+};
+
+// ---------------- CREATE ORDER ----------------
 exports.createOrder = async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
-      return res.status(401).json({ message: "Unauthorized: User not authenticated" });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const { customerName, customerPhone, shippingAddress, paymentMethod, items } = req.body;
-
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "Items array is required" });
     }
@@ -25,7 +30,6 @@ exports.createOrder = async (req, res) => {
 
       const quantity = item.quantity || 1;
       const price = product.price;
-
       totalAmount += quantity * price;
 
       orderItems.push({
@@ -33,7 +37,7 @@ exports.createOrder = async (req, res) => {
         quantity,
         productName: product.name,
         price,
-        image: product.imagePath ? `${BASE_URL}${product.imagePath}` : null
+        image: getImageUrl(product.imagePath)
       });
     }
 
@@ -60,7 +64,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// Get all orders for logged-in user
+// ---------------- GET ALL ORDERS ----------------
 exports.getAllOrders = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -79,9 +83,7 @@ exports.getAllOrders = async (req, res) => {
       items: order.items.map(item => ({
         productId: item.productId?._id,
         productName: item.productName,
-        image: item.productId?.imagePath
-          ? `${BASE_URL}${item.productId.imagePath}`
-          : item.image,
+        image: getImageUrl(item.productId?.imagePath) || item.image,
         quantity: item.quantity,
         price: item.price
       }))
@@ -90,11 +92,12 @@ exports.getAllOrders = async (req, res) => {
     res.status(200).json(formatted);
 
   } catch (error) {
+    console.error("Get all orders error:", error);
     res.status(500).json({ message: "Failed to fetch orders", error: error.message });
   }
 };
 
-// Get Order Details
+// ---------------- GET ORDER DETAILS ----------------
 exports.getOrderDetails = async (req, res) => {
   try {
     const order = await Order.findOne({
@@ -116,9 +119,7 @@ exports.getOrderDetails = async (req, res) => {
       items: order.items.map(item => ({
         productId: item.productId?._id,
         productName: item.productName,
-        image: item.productId?.imagePath
-          ? `${BASE_URL}${item.productId.imagePath}`
-          : item.image,
+        image: getImageUrl(item.productId?.imagePath) || item.image,
         quantity: item.quantity,
         price: item.price
       }))
@@ -132,7 +133,7 @@ exports.getOrderDetails = async (req, res) => {
   }
 };
 
-// Delete Order
+// ---------------- DELETE ORDER ----------------
 exports.deleteOrder = async (req, res) => {
   try {
     const deleted = await Order.findOneAndDelete({

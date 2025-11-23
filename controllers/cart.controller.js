@@ -27,7 +27,9 @@ exports.addToCart = async (req, res) => {
         product: product._id,
         name: product.name,
         price: product.price,
-        imageUrl: product.imagePath ? `${BASE_URL}${product.imagePath}` : null,
+        imageUrl: product.imagePath && product.imagePath.startsWith('http')
+    ? product.imagePath
+    : `${BASE_URL}${product.imagePath}`,
         quantity: quantity || 1,
         sizes: sizes
       });
@@ -58,7 +60,9 @@ exports.getCart = async (req, res) => {
           description: product.description?.iv ? await decrypt(product.description) : product.description,
           category: product.category?.iv ? await decrypt(product.category) : product.category,
           price: product.price,
-          imageUrl: product.imagePath ? `${BASE_URL}${product.imagePath}` : null,
+          imageUrl: product.imagePath && product.imagePath.startsWith('http')
+  ? product.imagePath
+  : `${BASE_URL}${product.imagePath}`,
         },
         quantity: item.quantity,
         sizes: item.sizes
